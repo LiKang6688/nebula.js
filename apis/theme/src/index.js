@@ -90,7 +90,7 @@ export default function theme() {
       if (!styleResolverInstanceCache[basePath]) {
         styleResolverInstanceCache[basePath] = styleResolverFn(basePath, resolvedThemeJSON);
       }
-      return styleResolverInstanceCache[basePath].getStyle(path, attribute, false);
+      return styleResolverInstanceCache[basePath].getStyle(path, attribute);
     },
   };
 

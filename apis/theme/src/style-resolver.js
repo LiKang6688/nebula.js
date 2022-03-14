@@ -14,24 +14,28 @@ import generateScales from './theme-scale-generator';
  * fontSize
  * @ignore
  */
-function constructPaths(pathSteps, baseSteps) {
+function constructPaths(pathSteps, baseSteps, exactMatch) {
   const ret = [];
   let localBaseSteps;
   let baseLength;
   if (pathSteps) {
-    let pathLength = pathSteps.length;
-    while (pathLength >= 0) {
-      localBaseSteps = baseSteps.slice();
-      baseLength = localBaseSteps.length;
-      while (baseLength >= 0) {
-        ret.push(localBaseSteps.concat(pathSteps));
-        localBaseSteps.pop();
-        baseLength--;
+    if (!exactMatch) {
+      let pathLength = pathSteps.length;
+      while (pathLength >= 0) {
+        localBaseSteps = baseSteps.slice();
+        baseLength = localBaseSteps.length;
+        while (baseLength >= 0) {
+          ret.push(localBaseSteps.concat(pathSteps));
+          localBaseSteps.pop();
+          baseLength--;
+        }
+        pathSteps.pop();
+        pathLength--;
       }
-      pathSteps.pop();
-      pathLength--;
+    } else {
+      ret.push(baseSteps.concat(pathSteps));
     }
-  } else {
+  } else if (!exactMatch) {
     localBaseSteps = baseSteps.slice();
     baseLength = localBaseSteps.length;
     while (baseLength >= 0) {
@@ -39,6 +43,8 @@ function constructPaths(pathSteps, baseSteps) {
       localBaseSteps.pop();
       baseLength--;
     }
+  } else {
+    ret.push(baseSteps);
   }
   return ret;
 }
@@ -55,25 +61,29 @@ function getObject(root, steps) {
   return obj;
 }
 
-function searchPathArray(pathArray, attribute, theme) {
-  for (let i = 0; i < pathArray.length; i++) {
-    const target = getObject(theme, pathArray[i]);
-    if (target !== null && target[attribute]) {
-      return target[attribute];
+function searchPathArray(pathArray, attribute, theme, exactMatch) {
+  if (exactMatch) {
+    const target = getObject(theme, pathArray[0]);
+    if (target !== null) return getObject(target, attribute.split('.'));
+  } else {
+    for (let i = 0; i < pathArray.length; i++) {
+      const target = getObject(theme, pathArray[i]);
+      if (target !== null && target[attribute]) return target[attribute];
     }
   }
   return undefined;
 }
 
 function searchValue(path, attribute, baseSteps, component) {
+  const exactMatch = attribute.split('.').length > 0;
   let pathArray;
   if (path === '') {
-    pathArray = constructPaths(null, baseSteps);
+    pathArray = constructPaths(null, baseSteps, exactMatch);
   } else {
     const steps = path.split('.');
-    pathArray = constructPaths(steps, baseSteps);
+    pathArray = constructPaths(steps, baseSteps, exactMatch);
   }
-  return searchPathArray(pathArray, attribute, component);
+  return searchPathArray(pathArray, attribute, component, exactMatch);
 }
 
 export default function styleResolver(basePath, themeJSON) {
